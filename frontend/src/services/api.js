@@ -59,3 +59,27 @@ export const getTasks = async () => {
 
     return data.tasks;
 };
+
+export const createTask = async (title, description) => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/tasks`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        if (data.errors) {
+            throw new Error(data.errors.map((e) => e.msg).join(', '));
+        }
+        throw new Error(data.message || 'Error al crear tarea');
+    }
+
+    return data.task;
+};
