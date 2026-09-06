@@ -41,3 +41,21 @@ export const loginUser = async (email, password) => {
 
     return data; // contiene { message, token, user }
 };
+export const getTasks = async () => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/tasks`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || 'Error al obtener tareas');
+    }
+
+    return data.tasks;
+};
