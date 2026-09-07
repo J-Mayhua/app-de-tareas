@@ -83,3 +83,42 @@ export const createTask = async (title, description) => {
 
     return data.task;
 };
+export const updateTask = async (id, updates) => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || 'Error al actualizar tarea');
+    }
+
+    return data.task;
+};
+
+export const deleteTask = async (id) => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || 'Error al eliminar tarea');
+    }
+
+    return data;
+};

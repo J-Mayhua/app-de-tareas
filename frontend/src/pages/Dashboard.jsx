@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTasks, createTask } from '../services/api';
+import { getTasks, createTask, updateTask, deleteTask } from '../services/api';
 
 function Dashboard() {
     const [tasks, setTasks] = useState([]);
@@ -35,6 +35,26 @@ function Dashboard() {
         }
     };
 
+    const handleToggleCompleted = async (task) => {
+        setError('');
+        try {
+            const updated = await updateTask(task.id, { completed: !task.completed });
+            setTasks(tasks.map((t) => (t.id === task.id ? updated : t)));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        setError('');
+        try {
+            await deleteTask(id);
+            setTasks(tasks.filter((t) => t.id !== id));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     if (loading) return <p>Cargando tareas...</p>;
 
     return (
@@ -60,7 +80,19 @@ function Dashboard() {
                 <ul>
                     {tasks.map((task) => (
                         <li key={task.id}>
-                            {task.title} — {task.completed ? 'Completada' : 'Pendiente'}
+                            <input
+                                type="checkbox"
+                                checked={task.completed}
+                                onChange={() => handleToggleCompleted(task)}
+                            />
+                            <span
+                                style={{
+                                    textDecoration: task.completed ? 'line-through' : 'none',
+                                }}
+                            >
+                                {task.title}
+                            </span>
+                            <button onClick={() => handleDelete(task.id)}>Eliminar</button>
                         </li>
                     ))}
                 </ul>
