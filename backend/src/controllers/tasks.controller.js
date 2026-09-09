@@ -7,13 +7,15 @@ export const createTask = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, description } = req.body;
+    const { title, description, list_id, priority, due_at } = req.body;
     const userId = req.user.id;
 
     try {
         const result = await pool.query(
-            'INSERT INTO tasks (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
-            [userId, title, description || null]
+            `INSERT INTO tasks (user_id, title, description, list_id, priority, due_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+            [userId, title, description || null, list_id || null, priority || 'medium', due_at || null]
         );
 
         return res.status(201).json({ message: 'Tarea creada exitosamente', task: result.rows[0] });
@@ -49,18 +51,21 @@ export const updateTask = async (req, res) => {
 
     const userId = req.user.id;
     const taskId = req.params.id;
-    const { title, description, completed } = req.body;
+    const { title, description, status, priority, due_at, list_id } = req.body;
 
     try {
         const result = await pool.query(
             `UPDATE tasks
        SET title = COALESCE($1, title),
            description = COALESCE($2, description),
-           completed = COALESCE($3, completed),
+           status = COALESCE($3, status),
+           priority = COALESCE($4, priority),
+           due_at = COALESCE($5, due_at),
+           list_id = COALESCE($6, list_id),
            updated_at = NOW()
-       WHERE id = $4 AND user_id = $5
+       WHERE id = $7 AND user_id = $8
        RETURNING *`,
-            [title, description, completed, taskId, userId]
+            [title, description, status, priority, due_at, list_id, taskId, userId]
         );
 
         if (result.rows.length === 0) {
