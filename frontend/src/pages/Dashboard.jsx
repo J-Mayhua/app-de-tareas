@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getTasks, createTask, updateTask, deleteTask, getLists, createList } from '../services/api';
+import {
+    getTasks, createTask, updateTask, deleteTask,
+    getLists, createList,
+    getTags, createTag, addTagToTask, removeTagFromTask,
+} from '../services/api';
 
 function Dashboard() {
     const [tasks, setTasks] = useState([]);
     const [lists, setLists] = useState([]);
+    const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -16,12 +21,20 @@ function Dashboard() {
     // Campo para crear una nueva libreta
     const [newListName, setNewListName] = useState('');
 
+    // Campo para crear una nueva etiqueta
+    const [newTagName, setNewTagName] = useState('');
+
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [tasksData, listsData] = await Promise.all([getTasks(), getLists()]);
+                const [tasksData, listsData, tagsData] = await Promise.all([
+                    getTasks(),
+                    getLists(),
+                    getTags(),
+                ]);
                 setTasks(tasksData);
                 setLists(listsData);
+                setTags(tagsData);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -43,7 +56,9 @@ function Dashboard() {
                 due_at: dueAt || null,
                 list_id: listId || null,
             });
-            setTasks([newTask, ...tasks]);
+            // Importante: agregamos "tags: []" manualmente, porque el backend
+            // no devuelve ese campo al crear (solo lo arma getTasks con el JOIN)
+            setTasks([{ ...newTask, tags: [] }, ...tasks]);
             setTitle('');
             setPriority('medium');
             setDueAt('');
@@ -61,6 +76,18 @@ function Dashboard() {
             const newList = await createList(newListName, '');
             setLists([newList, ...lists]);
             setNewListName('');
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleCreateTag = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const newTag = await createTag(newTagName);
+            setTags([...tags, newTag]);
+            setNewTagName('');
         } catch (err) {
             setError(err.message);
         }
@@ -86,6 +113,29 @@ function Dashboard() {
         }
     };
 
+    const handleAddTag = async (taskId, tagId) => {
+        if (!tagId) return;
+        setError('');
+        try {
+            await addTagToTask(taskId, tagId);
+            const updatedTasks = await getTasks();
+            setTasks(updatedTasks);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleRemoveTag = async (taskId, tagId) => {
+        setError('');
+        try {
+            await removeTagFromTask(taskId, tagId);
+            const updatedTasks = await getTasks();
+            setTasks(updatedTasks);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     if (loading) return <p>Cargando...</p>;
 
     return (
@@ -106,6 +156,20 @@ function Dashboard() {
                     <li key={list.id}>{list.name}</li>
                 ))}
             </ul>
+
+            <hr />
+
+            <h2>Mis Etiquetas</h2>
+            <form onSubmit={handleCreateTag}>
+                <input
+                    type="text"
+                    placeholder="Nueva etiqueta..."
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    required
+                />
+                <button type="submit">Crear etiqueta</button>
+            </form>
 
             <hr />
 
@@ -165,6 +229,26 @@ function Dashboard() {
                             </select>
 
                             <button onClick={() => handleDelete(task.id)}>Eliminar</button>
+
+                            <div>
+                                {task.tags.map((tag) => (
+                                    <span key={tag.id} style={{ marginRight: '4px' }}>
+                                        #{tag.name}
+                                        <button onClick={() => handleRemoveTag(task.id, tag.id)}>x</button>
+                                    </span>
+                                ))}
+
+                                <select onChange={(e) => handleAddTag(task.id, e.target.value)} value="">
+                                    <option value="">+ etiqueta</option>
+                                    {tags
+                                        .filter((tag) => !task.tags.some((t) => t.id === tag.id))
+                                        .map((tag) => (
+                                            <option key={tag.id} value={tag.id}>
+                                                {tag.name}
+                                            </option>
+                                        ))}
+                                </select>
+                            </div>
                         </li>
                     ))}
                 </ul>
