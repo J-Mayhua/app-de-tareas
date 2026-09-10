@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticateToken } from '../middlewares/auth.middleware.js';
-import { createTask, getTasks, updateTask, deleteTask } from '../controllers/tasks.controller.js';
+import { createTask, getTasks, updateTask, deleteTask, addTagToTask, removeTagFromTask } from '../controllers/tasks.controller.js';
 
 const router = Router();
 
@@ -35,5 +35,8 @@ router.put(
 );
 
 router.delete('/:id', authenticateToken, deleteTask);
+
+router.post('/:id/tags', authenticateToken, addTagToTask);
+router.delete('/:id/tags/:tagId', authenticateToken, removeTagFromTask);
 
 export default router;

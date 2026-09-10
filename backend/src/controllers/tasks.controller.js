@@ -102,3 +102,57 @@ export const deleteTask = async (req, res) => {
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
+export const addTagToTask = async (req, res) => {
+    const userId = req.user.id;
+    const taskId = req.params.id;
+    const { tag_id } = req.body;
+
+    try {
+        // Verificar que la tarea le pertenece al usuario
+        const taskCheck = await pool.query(
+            'SELECT id FROM tasks WHERE id = $1 AND user_id = $2',
+            [taskId, userId]
+        );
+
+        if (taskCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'Tarea no encontrada' });
+        }
+
+        // Insertar la relación en la tabla intermedia
+        await pool.query(
+            'INSERT INTO task_tags (task_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+            [taskId, tag_id]
+        );
+
+        return res.status(201).json({ message: 'Etiqueta agregada a la tarea' });
+    } catch (error) {
+        console.error('Error al agregar etiqueta:', error.message);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+export const removeTagFromTask = async (req, res) => {
+    const userId = req.user.id;
+    const { id: taskId, tagId } = req.params;
+
+    try {
+        const taskCheck = await pool.query(
+            'SELECT id FROM tasks WHERE id = $1 AND user_id = $2',
+            [taskId, userId]
+        );
+
+        if (taskCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'Tarea no encontrada' });
+        }
+
+        await pool.query(
+            'DELETE FROM task_tags WHERE task_id = $1 AND tag_id = $2',
+            [taskId, tagId]
+        );
+
+        return res.status(200).json({ message: 'Etiqueta removida de la tarea' });
+    } catch (error) {
+        console.error('Error al remover etiqueta:', error.message);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
