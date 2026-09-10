@@ -31,12 +31,24 @@ export const getTasks = async (req, res) => {
 
     try {
         const result = await pool.query(
-            'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC',
+            `SELECT
+        t.*,
+        COALESCE(
+          json_agg(
+            json_build_object('id', tg.id, 'name', tg.name)
+          ) FILTER (WHERE tg.id IS NOT NULL),
+          '[]'
+        ) AS tags
+       FROM tasks t
+       LEFT JOIN task_tags tt ON t.id = tt.task_id
+       LEFT JOIN tags tg ON tt.tag_id = tg.id
+       WHERE t.user_id = $1
+       GROUP BY t.id
+       ORDER BY t.created_at DESC`,
             [userId]
         );
 
         return res.status(200).json({ tasks: result.rows });
-
     } catch (error) {
         console.error('Error al obtener tareas:', error.message);
         return res.status(500).json({ message: 'Error interno del servidor' });
