@@ -2,7 +2,7 @@
 
 Aplicación web de gestión de tareas construida como proyecto de aprendizaje Full-Stack. Permite crear una cuenta, organizar tareas en libretas, clasificarlas con etiquetas y prioridad, y llevar seguimiento de fechas límite — con una sección dedicada a tareas atrasadas.
 
-![Dashboard preview](docs/image.png)
+![Dashboard preview](frontend/docs/image.png)
 
 ## 🛠️ Tecnologías
 
