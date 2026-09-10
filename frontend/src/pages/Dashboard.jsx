@@ -56,7 +56,7 @@ function Dashboard() {
                 due_at: dueAt || null,
                 list_id: listId || null,
             });
-            // Importante: agregamos "tags: []" manualmente, porque el backend
+            // Agregamos "tags: []" manualmente, porque el backend
             // no devuelve ese campo al crear (solo lo arma getTasks con el JOIN)
             setTasks([{ ...newTask, tags: [] }, ...tasks]);
             setTitle('');
@@ -97,7 +97,7 @@ function Dashboard() {
         setError('');
         try {
             const updated = await updateTask(task.id, { status: newStatus });
-            setTasks(tasks.map((t) => (t.id === task.id ? updated : t)));
+            setTasks(tasks.map((t) => (t.id === task.id ? { ...updated, tags: task.tags } : t)));
         } catch (err) {
             setError(err.message);
         }
@@ -136,7 +136,55 @@ function Dashboard() {
         }
     };
 
+    // ---------- Lógica de tareas atrasadas ----------
+    const isOverdue = (task) => {
+        if (!task.due_at || task.status === 'completed') return false;
+        return new Date(task.due_at) < new Date();
+    };
+
+    // ---------- Renderizado reutilizable de una tarea ----------
+    const renderTask = (task) => (
+        <li key={task.id}>
+            <strong>{task.title}</strong> — Prioridad: {task.priority}
+            {task.due_at && ` — Vence: ${new Date(task.due_at).toLocaleString()}`}
+
+            <select
+                value={task.status}
+                onChange={(e) => handleStatusChange(task, e.target.value)}
+            >
+                <option value="pending">Pendiente</option>
+                <option value="in_progress">En proceso</option>
+                <option value="completed">Completada</option>
+            </select>
+
+            <button onClick={() => handleDelete(task.id)}>Eliminar</button>
+
+            <div>
+                {task.tags.map((tag) => (
+                    <span key={tag.id} style={{ marginRight: '4px' }}>
+                        #{tag.name}
+                        <button onClick={() => handleRemoveTag(task.id, tag.id)}>x</button>
+                    </span>
+                ))}
+
+                <select onChange={(e) => handleAddTag(task.id, e.target.value)} value="">
+                    <option value="">+ etiqueta</option>
+                    {tags
+                        .filter((tag) => !task.tags.some((t) => t.id === tag.id))
+                        .map((tag) => (
+                            <option key={tag.id} value={tag.id}>
+                                {tag.name}
+                            </option>
+                        ))}
+                </select>
+            </div>
+        </li>
+    );
+
     if (loading) return <p>Cargando...</p>;
+
+    const overdueTasks = tasks.filter(isOverdue);
+    const otherTasks = tasks.filter((t) => !isOverdue(t));
 
     return (
         <div>
@@ -210,47 +258,21 @@ function Dashboard() {
                 <button type="submit">Agregar tarea</button>
             </form>
 
-            {tasks.length === 0 ? (
+            {overdueTasks.length > 0 && (
+                <>
+                    <h3 style={{ color: 'red' }}>⚠️ Tareas atrasadas</h3>
+                    <ul>
+                        {overdueTasks.map((task) => renderTask(task))}
+                    </ul>
+                </>
+            )}
+
+            <h3>Tareas</h3>
+            {otherTasks.length === 0 ? (
                 <p>No tienes tareas todavía.</p>
             ) : (
                 <ul>
-                    {tasks.map((task) => (
-                        <li key={task.id}>
-                            <strong>{task.title}</strong> — Prioridad: {task.priority}
-                            {task.due_at && ` — Vence: ${new Date(task.due_at).toLocaleString()}`}
-
-                            <select
-                                value={task.status}
-                                onChange={(e) => handleStatusChange(task, e.target.value)}
-                            >
-                                <option value="pending">Pendiente</option>
-                                <option value="in_progress">En proceso</option>
-                                <option value="completed">Completada</option>
-                            </select>
-
-                            <button onClick={() => handleDelete(task.id)}>Eliminar</button>
-
-                            <div>
-                                {task.tags.map((tag) => (
-                                    <span key={tag.id} style={{ marginRight: '4px' }}>
-                                        #{tag.name}
-                                        <button onClick={() => handleRemoveTag(task.id, tag.id)}>x</button>
-                                    </span>
-                                ))}
-
-                                <select onChange={(e) => handleAddTag(task.id, e.target.value)} value="">
-                                    <option value="">+ etiqueta</option>
-                                    {tags
-                                        .filter((tag) => !task.tags.some((t) => t.id === tag.id))
-                                        .map((tag) => (
-                                            <option key={tag.id} value={tag.id}>
-                                                {tag.name}
-                                            </option>
-                                        ))}
-                                </select>
-                            </div>
-                        </li>
-                    ))}
+                    {otherTasks.map((task) => renderTask(task))}
                 </ul>
             )}
         </div>
