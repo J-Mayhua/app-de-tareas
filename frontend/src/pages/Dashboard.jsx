@@ -351,12 +351,7 @@ function Dashboard() {
                     </div>
                 ) : (
                     otherTasks.length > 0 && (
-                        <>
-                            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-3">
-                                Tareas
-                            </h2>
                             <ul className="space-y-3">{otherTasks.map(renderTask)}</ul>
-                        </>
                     )
                 )}
             </main>
