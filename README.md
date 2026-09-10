@@ -2,7 +2,7 @@
 
 Aplicación web de gestión de tareas construida como proyecto de aprendizaje Full-Stack. Permite crear una cuenta, organizar tareas en libretas, clasificarlas con etiquetas y prioridad, y llevar seguimiento de fechas límite — con una sección dedicada a tareas atrasadas.
 
-![Dashboard preview](./docs/dashboard-preview.png)
+![Dashboard preview](./docs/image.png)
 *(Agrega aquí una captura real de tu Dashboard — guárdala en una carpeta `docs/` en la raíz del proyecto)*
 
 ## 🚀 Demo
